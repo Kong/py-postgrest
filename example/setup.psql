@@ -1,0 +1,33 @@
+begin;
+
+--- Create a non-superuser to own our objects
+create role provisioner noinherit createrole;
+grant create on database :"DBNAME" to provisioner;
+alter database :"DBNAME" owner to provisioner;
+grant provisioner to current_user;
+
+--- Extensions
+-- extensions can usually only be loaded by a superuser
+
+-- Load in uuid-ossp extension for uuid_generate_v1mc
+create schema "uuid-ossp" authorization provisioner;
+create extension "uuid-ossp" with schema "uuid-ossp";
+
+--- Drop superuser privileges
+-- swap into provisioner role so that objects aren't created with bypassRLS
+set role provisioner;
+
+-- Create schema to hold actual data
+create schema core authorization current_user;
+
+--- Entity definitions
+create table core.foo(
+	id uuid primary key default "uuid-ossp".uuid_generate_v1mc(),
+	name text not null,
+	created_at timestamptz not null default now()
+);
+alter table core.foo enable row level security;
+
+\include_relative api.psql
+
+commit;

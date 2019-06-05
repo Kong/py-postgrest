@@ -1,0 +1,84 @@
+--- Set up roles
+
+create user api noinherit
+	password :'API_PASSWORD'; -- Grab password from psql vars
+comment on role api is
+$$The api user is used to pivot into other roles.
+
+It should have no permissions itself$$;
+
+create schema v1 authorization current_user;
+grant api to current_user; -- allow current_user to hand over things to api role
+grant create on schema v1 to api; -- allow api role to own views in schema
+
+create role anon;
+comment on role anon is
+$$The anon role should only be able to see/do what we expect an anonymous member of the public to be able to do$$;
+grant anon to api;
+grant usage on schema v1 to anon;
+
+create role administrator;
+comment on role administrator is
+$$The administrator role is what a website administrator is able to do$$;
+grant administrator to api;
+grant anon to administrator; -- superset of anon
+
+
+--- Set up public API
+
+create view v1.foo as
+	select
+		id,
+		name,
+		created_at
+	from core.foo;
+comment on view v1.foo is
+	$$All the foos!$$;
+comment on column v1.foo.id is
+	$$Foo's ID$$;
+comment on column v1.foo.name is
+	$$Foo's human identifiable name$$;
+comment on column v1.foo.created_at is
+	$$When this foo was created$$;
+-- Anyone can:
+grant
+	-- get a list of foos
+	select,
+	-- add a new foo (but only specify the name)
+	insert(name),
+	-- change the name of a foo
+	update(name)
+	on table v1.foo to anon;
+-- Only admins can delete a foo
+grant delete on table v1.foo to administrator;
+alter view v1.foo owner to api;
+grant select,insert,update,delete on table core.foo to api;
+
+
+--- Set up permissions
+
+-- For demo purposes, we make it so you just specify your role via the HTTP header "role"
+create function api_user_role() returns name as $$
+	select nullif(current_setting('request.header.role', true), '')::name
+	$$ language sql;
+
+-- Special function called by PostgREST before each request
+create function pre_request() returns void as $$
+	declare
+		role name;
+	begin
+		role := api_user_role();
+		if role is not null then
+			raise notice 'setting role to %', role;
+			perform set_config('role', role, false);
+		end if;
+	end
+	$$ language plpgsql;
+
+create policy api_users_can_do_everything on core.foo to api
+	using(true)
+	with check(true);
+
+
+--- Finish up
+revoke api from current_user;
