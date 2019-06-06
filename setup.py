@@ -27,7 +27,7 @@ setup(
     ],
     setup_requires=["setuptools_scm"],
     use_scm_version=True,
-    packages=find_packages(),
+    packages=find_packages(exclude=["tests"]),
     zip_safe=True,
     install_requires=["aiohttp"],
 )
