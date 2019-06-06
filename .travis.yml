@@ -1,0 +1,37 @@
+dist: xenial
+sudo: false
+language: python
+python:
+  - "3.6"
+  - "3.7"
+
+before_install:
+  - curl -L https://github.com/PostgREST/postgrest/releases/download/v5.2.0/postgrest-v5.2.0-ubuntu.tar.xz | tar -JxC ~/
+
+install:
+  - python setup.py install
+
+stages:
+  - test
+  - examples
+
+jobs:
+  include:
+    - stage: examples
+      script:
+        - psql -c 'create database api' -U postgres
+        - psql -d api -f example/setup.psql --set API_PASSWORD=changeme
+        - ~/postgrest example/postgrest.config & sleep 0.2
+        - python example/main.py
+        - killall postgrest
+      python: # (example needs python >= 3.7)
+        - "3.7"
+
+script:
+  - python setup.py test
+
+after_success:
+  - python setup.py sdist bdist_wheel
+
+addons:
+  postgresql: "10"
