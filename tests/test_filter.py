@@ -15,6 +15,8 @@ class TestFilters(unittest.TestCase):
         self.assertEncoding('with"double quote', '%22with%5C%22double%20quote%22')
         self.assertEncoding('double quote at end"', 'double%20quote%20at%20end%22', True)
         self.assertEncoding('double quote at end"', '%22double%20quote%20at%20end%5C%22%22')
+        self.assertEncoding('slash at end\\', 'slash%20at%20end%5C', True)
+        self.assertEncoding('slash at end\\', '%22slash%20at%20end%5C%5C%22')
 
 if __name__ == '__main__':
     unittest.main()

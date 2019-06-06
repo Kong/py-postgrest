@@ -18,7 +18,7 @@ class Filter:
                 return urlquote(v)
             else:
                 # See http://postgrest.org/en/v5.2/api.html#reserved-characters
-                return urlquote('"' + v.replace('"', '\\"') + '"')
+                return urlquote('"' + v.replace("\\", "\\\\").replace('"', '\\"') + '"')
         elif type(v) == int:
             return "%d" % v
         elif type(v) == float:
