@@ -48,7 +48,7 @@ async def main():
                 raise e from None
 
     async with postgrest.Client(
-        "http://localhost:3001/", default_headers={"role": "administrator"}
+        "http://localhost:3000/", default_headers={"role": "administrator"}
     ) as client:
         # delete all the foos (now should work as an administrator)
         await client.delete("foo", filters=[])
