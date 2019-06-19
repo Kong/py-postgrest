@@ -32,7 +32,7 @@ class Error(aiohttp.ClientResponseError):
 
 class JSONEncoder(json.JSONEncoder):
     """
-    A JSONEncoder that supports serialising UUID and datetime objects
+    A JSONEncoder that supports serialising UUID, datetime and bytes objects
     """
 
     def default(self, o):
@@ -40,7 +40,10 @@ class JSONEncoder(json.JSONEncoder):
             return o.hex
         elif isinstance(o, datetime):
             return o.isoformat()
-        return super().default(self, o)
+        elif isinstance(o, bytes):
+            # https://www.postgresql.org/docs/current/datatype-binary.html#id-1.5.7.12.9
+            return "\\x" + o.hex()
+        return super().default(o)
 
 
 class Client:
