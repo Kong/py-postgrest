@@ -131,11 +131,13 @@ class Client:
         entity_type,
         select=None,
         filters=None,
+        headers=None,
         singular=False,
         limit=None,
         offset=None,
     ):
-        headers = {}
+        headers = dict(headers) if headers else {}
+
         # TODO: support other return formats (e.g. CSV, application/octet-stream)
         if singular:
             headers["accept"] = "application/vnd.pgrst.object+json"
@@ -151,12 +153,16 @@ class Client:
             else:
                 raise await Error.from_response(response)
 
-    async def insert(self, entity_type, item, returning="minimal", select=None):
+    async def insert(
+        self, entity_type, item, headers=None, returning="minimal", select=None
+    ):
         """
         See http://postgrest.org/en/v5.2/api.html#insertions-updates
 
         item: if an array, insert each member as a row.
             Otherwise, insert just the passed item
+
+        headers: extra headers to send
 
         returning: pass:
             `"minimal"` to return nothing (required if you don't have read permissions)
@@ -166,13 +172,15 @@ class Client:
         select: can be used to return related data (e.g. computed columns);
             only useful when `returning` is `"representation"`
         """
-        headers = {"accept": "application/json"}
+        headers = dict(headers) if headers else {}
+
+        headers["accept"] = "application/json"
         if returning == "minimal":
             headers["prefer"] = "return=minimal"
         elif returning == "representation":
             headers["prefer"] = "return=representation"
         elif returning == "url":
-            pass
+            headers.pop("prefer", None)
         else:
             raise ValueError("invalid 'returning' argument")
 
@@ -190,10 +198,14 @@ class Client:
                 location = response.headers["location"]
                 return urljoin(self.instance_url, location)
 
-    async def update(self, entity_type, patch, filters, returning=None, select=None):
+    async def update(
+        self, entity_type, patch, filters, headers=None, returning=None, select=None
+    ):
         """
 
         filters: which rows to update. Beware that providing None will update all rows!
+
+        headers: extra headers to send
 
         returning: pass:
             `None` returns the url of the created object
@@ -202,11 +214,14 @@ class Client:
         select: can be used to return related data (e.g. computed columns);
             only useful when `returning` is `"representation"`
         """
-        headers = {"accept": "application/json"}
+        headers = dict(headers) if headers else {}
+
+        headers["accept"] = "application/json"
         if returning == "representation":
             headers["prefer"] = "return=representation"
         else:
             assert returning is None
+            headers.pop("prefer", None)
 
         async with self.session.patch(
             self.prepare_url(entity_type, select, filters), headers=headers, json=patch
@@ -220,13 +235,15 @@ class Client:
 
             raise await Error.from_response(response)
 
-    async def delete(self, entity_type, filters):
+    async def delete(self, entity_type, filters, headers=None):
         """
+        headers: extra headers to send
 
         filters: which rows to update. Beware that providing None will update all rows!
         """
+
         async with self.session.delete(
-            self.prepare_url(entity_type, None, filters), headers=None
+            self.prepare_url(entity_type, None, filters), headers=headers
         ) as response:
             if response.status != 204:
                 raise await Error.from_response(response)
