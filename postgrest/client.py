@@ -37,7 +37,7 @@ class JSONEncoder(json.JSONEncoder):
 
     def default(self, o):
         if isinstance(o, UUID):
-            return o.hex
+            return str(o)
         elif isinstance(o, datetime):
             return o.isoformat()
         elif isinstance(o, bytes):
