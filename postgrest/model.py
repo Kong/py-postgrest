@@ -102,6 +102,7 @@ class Model(UserDict):
             self.entity_type, self.shallowDict(), headers=headers, returning=returning
         )
         if returning == "representation":
+            assert len(r) == 1
             for key, value in r[0].items():
                 if value is not None:
                     field_type = self.field_types[key]
