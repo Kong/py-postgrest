@@ -7,4 +7,5 @@ except DistributionNotFound:
 
 from .client import Client, Error
 from .filters import *
+from .model import Model
 from .model_client import ModelClient
