@@ -34,7 +34,7 @@ class Filter:
         elif v is None:
             return "null"
         elif isinstance(v, UUID):
-            return v.hex
+            return str(v)
         elif isinstance(v, datetime):
             return v.isoformat()
         else:
