@@ -148,7 +148,7 @@ class Client:
             self.prepare_url(entity_type, select, filters, limit=limit, offset=offset),
             headers=headers,
         ) as response:
-            if response.status == 200:
+            if response.status == 200 or response.status == 404:
                 return await response.json()
             else:
                 raise await Error.from_response(response)
@@ -222,15 +222,14 @@ class Client:
         else:
             assert returning is None
             headers.pop("prefer", None)
-
         async with self.session.patch(
             self.prepare_url(entity_type, select, filters), headers=headers, json=patch
         ) as response:
             if returning == "representation":
-                if response.status == 200:
+                if response.status == 200 or response.status == 404:
                     return await response.json()
             else:
-                if response.status == 204:
+                if response.status == 204 or response.status == 404:
                     return
 
             raise await Error.from_response(response)
