@@ -17,10 +17,14 @@ class ModelReference:
 class Model(UserDict):
     entity_type = None
     field_types = None
+    primary_keys = None
 
     def __init__(self, client, data={}):
         assert self.entity_type is not None
         assert self.field_types is not None
+        assert self.primary_keys is not None
+        for pk in self.primary_keys:
+            assert pk in self.field_types
         for key, value in data.items():
             self.validate(key, value)
 
@@ -110,4 +114,27 @@ class Model(UserDict):
                         value = UUID(hex=value)
                 self.data[key] = value
 
-    # TODO: patch
+    # TODO: pull?
+
+    # Note: this method is not called .update because this class inherits from UserDict
+    # TODO: rename to 'push'?
+    async def patch(self, old, headers=None, returning=None):
+        # TODO: figure out what filters to use
+        # e.g. do we need to track changes?
+        # e.g. do we need developer to list primary keys?
+        filters = {}
+        r = await self.client.update(
+            self.entity_type,
+            self.shallowDict(),
+            filters=filters,
+            headers=headers,
+            returning=returning,
+        )
+        if returning == "representation":
+            assert len(r) == 1
+            for key, value in r[0].items():
+                if value is not None:
+                    field_type = self.field_types[key]
+                    if field_type == UUID:
+                        value = UUID(hex=value)
+                self.data[key] = value
