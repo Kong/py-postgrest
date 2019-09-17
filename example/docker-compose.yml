@@ -1,0 +1,22 @@
+version: "3"
+
+services:
+  postgres:
+    image: postgres
+    volumes:
+      - ./:/docker-entrypoint-initdb.d/
+
+  api:
+    image: postgrest/postgrest
+    ports:
+      - "3000:3000"
+    links:
+      - postgres
+    depends_on:
+      - postgres
+    environment:
+      PGRST_DB_URI: postgres://postgres:@postgres:5432/postgres
+      PGRST_DB_SCHEMA: v1
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_SERVER_PROXY_URI: "http://127.0.0.1:3000"
+      PGRST_PRE_REQUEST: "pre_request"

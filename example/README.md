@@ -8,6 +8,11 @@ To run this example:
 
 4. Run the python entrypoint: `python main.py`
 
+or 
+
+1. Start Postgres and PostgREST `docker-compose up`
+2. Run the python entrypoint: `python main.py`
+
 
 ## Example Output
 

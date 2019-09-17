@@ -7,3 +7,4 @@
 
 
 An [aiohttp](https://docs.aiohttp.org/) based client for [PostgREST](http://postgrest.org/) APIs.
+See [the example](./example/README.md) for usage.

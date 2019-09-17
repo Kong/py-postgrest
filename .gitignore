@@ -3,3 +3,7 @@ __pycache__
 /.eggs/
 /build/
 /dist/
+
+# development
+.vscode
+.python-version
